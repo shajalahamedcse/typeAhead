@@ -65,4 +65,13 @@ const search = (prefix) =>{
     });
 }
 search('sa')
+
+const  setScore = (word, score) => {
+    const prefixes = extractPrefixes(word);
+    prefixes.forEach(prefix  =>{
+        redisClient.zadd(prefix, score, word);
+    });
+}
+setScore(names[0], 20);
+search('s')
 redisClient.quit();
