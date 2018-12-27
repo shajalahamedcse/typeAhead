@@ -1,7 +1,19 @@
 const redis = require("redis");
+const fs = require("fs");
 const redisClient = redis.createClient();
 
 
+const importFile = (path) => {
+    let data;
+    try{
+        data = fs.readFileSync(path, "utf-8");
+    }catch(e){
+        console.log(`ERROR: ${e.path} is not a valid file path`);
+        return;
+    }
+    const dataJson = JSON.parse(data);
+    insertWords(dataJson);
+}
 const insertWords = (words) => {
     words.forEach(word => {
         const prefixes = extractPrefixes(word);
@@ -16,6 +28,7 @@ const insertWords = (words) => {
 //  [{ word: "string", score: val }]
 const insertWordsWithScores = wordsWithScores => {
     wordsWithScores.forEach(item => {
+       
       const prefixes = extractPrefixes(item.word);
       index(prefixes, item.word, item.score);
     });
@@ -45,23 +58,23 @@ const deleteWord = (word) =>{
 }
 
 
-const extractPrefixes = word => {
+const extractPrefixes = (word )=> {
     const prefixes = [];
-    for (let i = 1; i <= word.length; i++) {
-      prefixes.push(word.slice(0, i));
+    for (let index = 1; index <= word.length; index++) {
+      prefixes.push(word.slice(0, index));
     }
     return prefixes;
   };
   
-const index = (prefixes, word) => {
+const index = (prefixes, word, score=0) => {
     prefixes.forEach(prefix =>
-      redisClient.zadd(prefix, 0, word)
+      redisClient.zadd(prefix, score, word)
     );
 };
 
 
 const search = prefixQuery => {
-    client.zrange(prefixQuery, 0, -1, (err, reply) =>
+    redisClient.zrange(prefixQuery, 0, -1, (err, reply) =>
       console.log(reply)
     );
   };
@@ -92,5 +105,6 @@ module.exports = {
     index,
     search,
     setScore,
-    returnTopNSuggestions
+    returnTopNSuggestions,
+    importFile
 }
