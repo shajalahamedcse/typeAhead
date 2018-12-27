@@ -1,77 +1,85 @@
-"use strict";
-
-const redis = require('redis');
+const redis = require("redis");
 const redisClient = redis.createClient();
 
-/*
-redisClient.zadd('animal', 1 , 'cat');
-redisClient.zadd('animal', 2, 'cow');
-redisClient.zadd('animal', 3, 'catfish');
-redisClient.zadd('animal', 4, 'croccodile');
-redisClient.zincrby('animal', 5, 'cat');
 
-redisClient.zscore('animal', 'catfish', (err, score) =>{
-    if(!err){
-        console.log(score);
-    }else{
-        console.log(err);
-    }
-});
-
-redisClient.quit();
-*/
-
-/*
-class TypeAhead{
-    constructor(){
-        this.words = []
-    }
-
-    batchImport(words){
-
-    }
-}
-*/
-
-const batchImport = (words) => {
+const insertWords = (words) => {
     words.forEach(word => {
         const prefixes = extractPrefixes(word);
         index(prefixes, word);
+        console.log(prefixes);
     });
+    return words.length;
 };
-const  extractPrefixes = (word) => {
-    const prefixes = [];
-    for(let index = 1; index <= word.length; index++){
-        prefixes.push(word.slice(0,index));
-    }
-    //console.log(prefixes);
-    return prefixes;
+
+const  insertWord = (word) => {
+    insertWords([word]);
+    return 1;
 }
 
-const index = (prefixes, word)=>{
+const remove = (prefixes, word) => {
     prefixes.forEach(prefix => {
-        redisClient.zadd(prefix, 0, word);
-        //console.log(prefix + " 0 "+word);
-    });
+        redisClient.zrem(prefix, word);
+    })
 }
 
-const names = ['shajal','jayed', 'sajib', 'sazid', 'sourov'];
-
-batchImport(names);
-
-const search = (prefix) =>{
-    redisClient.zrange(prefix, 0, -1, (err, data)=>{
-        console.log(data);
-    });
+const deleteWords = (words) => {
+    words.forEach(word => {
+        const prefixes = extractPrefixes(words);
+        remove(prefixes, word);
+    })
+    return words.length;
 }
-search('sa')
+const deleteWord = (word) =>{
+    deleteWords([word]);
+    return  1;
+}
 
-const  setScore = (word, score) => {
+
+const extractPrefixes = word => {
+    const prefixes = [];
+    for (let i = 1; i <= word.length; i++) {
+      prefixes.push(word.slice(0, i));
+    }
+    return prefixes;
+  };
+  
+const index = (prefixes, word) => {
+    prefixes.forEach(prefix =>
+      redisClient.zadd(prefix, 0, word)
+    );
+};
+
+
+const search = prefixQuery => {
+    client.zrange(prefixQuery, 0, -1, (err, reply) =>
+      console.log(reply)
+    );
+  };
+  
+const returnTopNSuggestions = (suggestionCount) => {
+    return (prefixQuery) => {
+        redisClient.zrange(prefixQuery, 0, suggestionCount - 1, (err, reply)=>{
+            console.log(reply);
+        });
+    };
+};
+
+
+const setScore = (word, score) => {
     const prefixes = extractPrefixes(word);
-    prefixes.forEach(prefix  =>{
-        redisClient.zadd(prefix, score, word);
-    });
+    prefixes.forEach(prefix =>{
+      redisClient.zadd(prefix, score, word)
+      console.log(prefix+" "+score+" "+word);
+    }
+    );
+  };
+
+module.exports = {
+    redisClient,
+    insertWords,
+    extractPrefixes,
+    index,
+    search,
+    setScore,
+    returnTopNSuggestions
 }
-setScore(names[0], 20);
-search('s')
-redisClient.quit();
