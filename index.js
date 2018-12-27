@@ -11,6 +11,16 @@ const insertWords = (words) => {
     return words.length;
 };
 
+
+// takes an array of words with scores 
+//  [{ word: "string", score: val }]
+const insertWordsWithScores = wordsWithScores => {
+    wordsWithScores.forEach(item => {
+      const prefixes = extractPrefixes(item.word);
+      index(prefixes, item.word, item.score);
+    });
+  };
+
 const  insertWord = (word) => {
     insertWords([word]);
     return 1;
@@ -77,6 +87,7 @@ const setScore = (word, score) => {
 module.exports = {
     redisClient,
     insertWords,
+    insertWordsWithScores,
     extractPrefixes,
     index,
     search,
